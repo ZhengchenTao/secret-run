@@ -236,3 +236,28 @@ public class IssuerVariantTests
     public void Other_providers_are_exact() =>
         Assert.Equal(["https://login.example.com/realms/x"], IdTokenVerifier.IssuerVariants("https://login.example.com/realms/x"));
 }
+
+/// <summary>Cookie hardening: strict everywhere except Development, where plain http on localhost must work.</summary>
+public class CookieProfileTests
+{
+    [Fact]
+    public void Strict_uses_host_prefix_and_secure_only()
+    {
+        var p = CookieProfile.Strict;
+        Assert.Equal("__Host-secrets-web", p.Name("secrets-web"));
+        Assert.Equal(Microsoft.AspNetCore.Http.CookieSecurePolicy.Always, p.SecurePolicy);
+    }
+
+    [Theory]
+    [InlineData("Production", false)]
+    [InlineData("Testing", false)]
+    [InlineData("Staging", false)]
+    [InlineData("Development", true)]
+    public void Only_development_allows_http(string env, bool allowHttp)
+    {
+        var host = new Microsoft.Extensions.Hosting.Internal.HostingEnvironment { EnvironmentName = env };
+        var p = CookieProfile.For(host);
+        Assert.Equal(allowHttp, p.AllowHttp);
+        Assert.Equal(allowHttp ? "secrets-web-af" : "__Host-secrets-web-af", p.Name("secrets-web-af"));
+    }
+}

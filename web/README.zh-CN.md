@@ -156,7 +156,7 @@ connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`
 
 | 键 | 默认 | 说明 |
 |---|---|---|
-| `PublicOrigin` | 空 | 对外原点，如 `https://secrets.example.com`。每个请求的 Scheme/Host 都改写成它（redirect_uri 与 Secure cookie 依赖它）。**Production 必填** |
+| `PublicOrigin` | 空 | 对外原点，如 `https://secrets.example.com`。每个请求的 Scheme/Host 都改写成它（redirect_uri 与 Secure cookie 依赖它）。**Production 必填，且必须是 `https://`**（会话与防伪 cookie 是 `__Host-` / 仅 Secure；`http://` 原点启动时直接拒绝） |
 | `Deployment:AccessLayer` | 空 | 自由文本，说明是什么在保护这个服务，如 `tailscale`、`cloudflare-access`、`vpn`、`reverse-proxy`。**Production 必填**（为空拒绝启动）；填 `none` 会启动但打醒目警告。Development 环境不强制 |
 | `Network:KnownProxies` | `[]` | 可信反向代理的 IP。它或 `KnownNetworks` 非空时，只接受来自这些对端的 `X-Forwarded-For` / `X-Forwarded-Proto`（只信一跳；框架默认对回环地址的信任会被清掉）。为空 = 忽略所有转发头 |
 | `Network:KnownNetworks` | `[]` | 可信反向代理的 CIDR 网段，如 `10.0.0.0/8` |
@@ -260,3 +260,11 @@ dotnet test
 
 集成测试在临时目录生成测试 identity，用 age CLI 加密随机测试值，建测试裸仓，再用 `WebApplicationFactory` 加测试认证方案或假
 IdP 跑起来。不接触任何真实数据。`Development` 环境下不强制访问层检查。
+
+### 本地对接真实 IdP 试用
+
+用 `ASPNETCORE_ENVIRONMENT=Development`、`PublicOrigin=http://localhost:8099`（外加 `ASPNETCORE_URLS=http://localhost:8099`）启动。
+只有 Development 环境下 cookie 不带 `__Host-` 前缀、也不要求 Secure，所以纯 `http://localhost` 能用；启动时会打一条警告。
+在 IdP 登记回调地址 `http://localhost:8099/signin-oidc`（Google 的 Web 客户端接受 `http://localhost`），用完删掉。
+`Repo:GitDir` / `Repo:PushUrl` 指向只放测试值的本地裸仓，`Repo:WorkDir`、`Repo:FavoritesPath`、`Audit:Path` 指到临时目录。
+Development 实例绝不要对外暴露。

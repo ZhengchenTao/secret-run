@@ -225,6 +225,15 @@ public sealed class OidcFlowTests(OidcFactory f) : IClassFixture<OidcFactory>
         Assert.Throws<InvalidOperationException>(() => f2.CreateClient());
     }
 
+    [Fact]
+    public void Production_With_Http_PublicOrigin_Fails_Fast()
+    {
+        // Secure-only cookies would make every page fail right after sign-in; refuse at startup instead.
+        using var f2 = f.WithWebHostBuilder(b => b.UseSetting("PublicOrigin", "http://localhost:8099"));
+        var ex = Assert.Throws<InvalidOperationException>(() => f2.CreateClient());
+        Assert.Contains("https://", ex.Message);
+    }
+
     // ---------------------------------------------------------------- Deployment:AccessLayer guard
 
     [Fact]

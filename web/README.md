@@ -176,7 +176,7 @@ Every key can be overridden with an environment variable (`:` becomes `__`, arra
 
 | Key | Default | Description |
 |---|---|---|
-| `PublicOrigin` | empty | Public origin, e.g. `https://secrets.example.com`. Every request's Scheme/Host is rewritten to it (redirect_uri and Secure cookies depend on it). **Required in Production** |
+| `PublicOrigin` | empty | Public origin, e.g. `https://secrets.example.com`. Every request's Scheme/Host is rewritten to it (redirect_uri and Secure cookies depend on it). **Required in Production, and must be `https://`** (session and antiforgery cookies are `__Host-` / Secure-only; an `http://` origin is refused at startup) |
 | `Deployment:AccessLayer` | empty | Free text naming what protects the service, e.g. `tailscale`, `cloudflare-access`, `vpn`, `reverse-proxy`. **Required in Production** (refuses to start when empty); `none` starts with a prominent warning. Not enforced in Development |
 | `Network:KnownProxies` | `[]` | IP addresses of trusted reverse proxies. When this or `KnownNetworks` is non-empty, `X-Forwarded-For` / `X-Forwarded-Proto` are honored from those peers only (one hop; the framework's default loopback trust is cleared). Empty = forwarded headers are ignored |
 | `Network:KnownNetworks` | `[]` | CIDR ranges of trusted reverse proxies, e.g. `10.0.0.0/8` |
@@ -286,3 +286,12 @@ dotnet test
 Integration tests generate a test identity in a temp directory, encrypt random test values with the age CLI, build a test
 bare repo, and run the app through `WebApplicationFactory` with a test authentication scheme or a fake IdP. No real data is
 involved. In the `Development` environment the access-layer guard is not enforced.
+
+### Local try-out against a real IdP
+
+Run with `ASPNETCORE_ENVIRONMENT=Development` and `PublicOrigin=http://localhost:8099` (plus `ASPNETCORE_URLS=http://localhost:8099`).
+Only in Development are cookies issued without the `__Host-` prefix and without Secure, so plain `http://localhost` works;
+the app logs a warning at startup. Register `http://localhost:8099/signin-oidc` as a redirect URI at your IdP (Google accepts
+`http://localhost` for Web clients) and remove it again afterwards. Point `Repo:GitDir` / `Repo:PushUrl` at a local bare repo
+with test values only, and set `Repo:WorkDir`, `Repo:FavoritesPath`, `Audit:Path` to a scratch directory. Never expose a
+Development instance.

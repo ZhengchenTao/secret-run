@@ -42,6 +42,12 @@ builder.Services.AddSingleton(sp => new FavoriteStore(
 
 if (builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(site.PublicOrigin))
     throw new InvalidOperationException("PublicOrigin must be configured in Production (for example https://secrets.example.com)");
+// Cookies are __Host- / Secure-only outside Development, so a plain-http origin would fail right after sign-in
+// (antiforgery refuses to run). Say so at startup instead.
+if (builder.Environment.IsProduction() && !site.PublicOrigin.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+    throw new InvalidOperationException(
+        "PublicOrigin must be https:// in Production: session and antiforgery cookies are Secure-only. Terminate TLS in front of the service; for a local try-out run with ASPNETCORE_ENVIRONMENT=Development instead");
+var cookieProfile = CookieProfile.For(builder.Environment);
 
 // Refuse to start in Production unless an access layer is declared (see StartupChecks for the reasoning).
 var accessLayer = StartupChecks.CheckAccessLayer(builder.Environment, deployment);
@@ -49,11 +55,11 @@ var accessLayer = StartupChecks.CheckAccessLayer(builder.Environment, deployment
 // Trusted reverse proxy: only when explicitly configured. Null = X-Forwarded-* is never read.
 var forwarded = StartupChecks.BuildForwardedHeaders(network);
 
-builder.Services.AddSecretsWebAuth(oidc);
+builder.Services.AddSecretsWebAuth(oidc, cookieProfile);
 builder.Services.AddAntiforgery(a =>
 {
-    a.Cookie.Name = "__Host-secrets-web-af";
-    a.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    a.Cookie.Name = cookieProfile.Name("secrets-web-af");
+    a.Cookie.SecurePolicy = cookieProfile.SecurePolicy;
     a.Cookie.SameSite = SameSiteMode.Strict;
     a.HeaderName = "RequestVerificationToken";
     a.FormFieldName = "__RequestVerificationToken";
@@ -75,6 +81,8 @@ if (accessLayer == AccessLayerStatus.ExplicitlyNone)
     app.Logger.LogWarning(StartupChecks.AccessLayerNoneWarning);
 else if (accessLayer == AccessLayerStatus.Declared)
     app.Logger.LogInformation("Access layer: {AccessLayer}", deployment.AccessLayer.Trim());
+if (cookieProfile.AllowHttp)
+    app.Logger.LogWarning("Development environment: cookies are not Secure-only and plain http is accepted. Never expose this instance.");
 
 // Must run before anything that reads RemoteIpAddress (login-failure limiter, audit ip) or the request scheme.
 if (forwarded is not null) app.UseForwardedHeaders(forwarded);

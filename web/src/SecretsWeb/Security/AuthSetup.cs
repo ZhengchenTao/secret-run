@@ -20,8 +20,9 @@ public static class AuthSetup
     /// <summary>The caller's own identity as the IdP asserted it, kept only for the "access denied" response.</summary>
     public sealed record DeniedIdentity(string? Sub, string? Email, bool EmailVerified, string Reason);
 
-    public static void AddSecretsWebAuth(this IServiceCollection services, OidcOptions o)
+    public static void AddSecretsWebAuth(this IServiceCollection services, OidcOptions o, CookieProfile? cookies = null)
     {
+        var profile = cookies ?? CookieProfile.Strict;
         // Fail fast: don't start with required OIDC settings missing (ClientSecret only comes from the environment)
         if (string.IsNullOrWhiteSpace(o.Authority) || string.IsNullOrWhiteSpace(o.ClientId) || string.IsNullOrWhiteSpace(o.ClientSecret))
             throw new InvalidOperationException(
@@ -36,7 +37,7 @@ public static class AuthSetup
         services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
             .Configure<MemoryTicketStore, TimeProvider>((c, store, time) =>
             {
-                ConfigureCookie(c, o, time);
+                ConfigureCookie(c, o, time, profile);
                 c.SessionStore = store;
             });
 
@@ -46,7 +47,7 @@ public static class AuthSetup
                 a.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
             .AddCookie()
-            .AddOpenIdConnect(oidc => ConfigureOidc(oidc, o));
+            .AddOpenIdConnect(oidc => ConfigureOidc(oidc, o, profile));
 
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new AuthorizationPolicyBuilder()
@@ -62,11 +63,12 @@ public static class AuthSetup
         && RedirectHttpResult.IsLocalUrl(url)
         && !url.Any(ch => char.IsControl(ch) || ch == '\\');
 
-    public static void ConfigureCookie(CookieAuthenticationOptions c, OidcOptions o, TimeProvider time)
+    public static void ConfigureCookie(CookieAuthenticationOptions c, OidcOptions o, TimeProvider time, CookieProfile? cookies = null)
     {
-        c.Cookie.Name = "__Host-secrets-web";
+        var profile = cookies ?? CookieProfile.Strict;
+        c.Cookie.Name = profile.Name("secrets-web");
         c.Cookie.HttpOnly = true;
-        c.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        c.Cookie.SecurePolicy = profile.SecurePolicy;
         c.Cookie.SameSite = SameSiteMode.Lax; // the OIDC callback is a cross-site top-level GET redirect, Lax is enough
         c.Cookie.Path = "/";
         c.ExpireTimeSpan = TimeSpan.FromMinutes(o.IdleTimeoutMinutes);
@@ -114,8 +116,9 @@ public static class AuthSetup
                || (c.ValueType == ClaimValueTypes.Boolean && string.Equals(c.Value, "true", StringComparison.OrdinalIgnoreCase));
     }
 
-    public static void ConfigureOidc(OpenIdConnectOptions oidc, OidcOptions o)
+    public static void ConfigureOidc(OpenIdConnectOptions oidc, OidcOptions o, CookieProfile? cookies = null)
     {
+        var profile = cookies ?? CookieProfile.Strict;
         oidc.Authority = o.Authority;
         oidc.ClientId = o.ClientId;
         oidc.ClientSecret = o.ClientSecret;              // client_secret_post
@@ -141,9 +144,9 @@ public static class AuthSetup
         // Google may put either issuer spelling into id_tokens; the handler validates the issuer too (see IdTokenVerifier).
         var issuers = IdTokenVerifier.IssuerVariants(o.Authority);
         if (issuers.Length > 1) oidc.TokenValidationParameters.ValidIssuers = issuers;
-        oidc.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+        oidc.CorrelationCookie.SecurePolicy = profile.SecurePolicy;
         oidc.CorrelationCookie.SameSite = SameSiteMode.Lax;
-        oidc.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
+        oidc.NonceCookie.SecurePolicy = profile.SecurePolicy;
         oidc.NonceCookie.SameSite = SameSiteMode.Lax;
 
         oidc.Events = new OpenIdConnectEvents
@@ -288,4 +291,21 @@ public static class AuthSetup
 public static class CsrfHeader
 {
     public const string Name = "X-Secrets-Web";
+}
+
+/// <summary>
+/// Cookie hardening. Every environment except Development: <c>__Host-</c> names and Secure-only, so the service works
+/// only behind HTTPS (Production also refuses a non-https PublicOrigin at startup). Development: plain names and
+/// SameAsRequest so <c>dotnet run</c> on http://localhost works -- a <c>__Host-</c> cookie without Secure would be
+/// rejected by the browser, and antiforgery refuses Secure-only cookies on a plain-http request.
+/// </summary>
+public sealed record CookieProfile(bool AllowHttp)
+{
+    public static readonly CookieProfile Strict = new(false);
+
+    public static CookieProfile For(IHostEnvironment env) => new(env.IsDevelopment());
+
+    public CookieSecurePolicy SecurePolicy => AllowHttp ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+
+    public string Name(string baseName) => AllowHttp ? baseName : "__Host-" + baseName;
 }

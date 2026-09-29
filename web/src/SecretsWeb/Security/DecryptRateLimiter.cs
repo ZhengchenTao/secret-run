@@ -38,7 +38,7 @@ public sealed class DecryptRateLimiter(
         var sid = ctx.User.FindFirst(SessionIdClaim)?.Value;
         if (!string.IsNullOrEmpty(sub) && !string.IsNullOrEmpty(sid)) return $"u:{sub}|{sid}";
 
-        var cookie = ctx.Request.Cookies[SessionCookieName];
+        var cookie = ctx.Request.Cookies[SessionCookieName] ?? ctx.Request.Cookies[SessionCookieName["__Host-".Length..]];   // Development uses the plain name
         if (!string.IsNullOrEmpty(cookie))
             return "s:" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(cookie)))[..16];
         return "u:" + (sub ?? "anonymous");
