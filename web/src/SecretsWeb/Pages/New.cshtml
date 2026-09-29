@@ -1,0 +1,15 @@
+@page "/new"
+@model NewModel
+@{
+    ViewData["Title"] = "New entry";
+}
+<p class="crumb"><a href="/">← All entries</a></p>
+<h1>New entry</h1>
+@if (!Model.WriteEnabled)
+{
+    <p class="error">This instance is read-only (no push URL configured).</p>
+}
+else
+{
+    <partial name="_EntryForm" model="Model.Form" />
+}

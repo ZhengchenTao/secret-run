@@ -1,0 +1,14 @@
+# Whitelist: ignore everything except the files named below, so plaintext never gets committed (FORMAT.md section 11).
+*
+!*/
+!/.gitignore
+!/.gitattributes
+!/FORMAT.md
+!/README.md
+!/INCIDENT.md
+!/recipients.toml
+!/policy.toml
+!/catalog.toml
+!/store/**/*.age
+!/store/.recipients.lock
+!/recovery/*.age

@@ -1,0 +1,44 @@
+@page "/entry/{domain}/{group}/{name}/delete"
+@model DeleteModel
+@{
+    ViewData["Title"] = "Delete entry";
+}
+<p class="crumb"><a href="/entry/@Model.Path">← Back to entry</a></p>
+<h1>Delete <code>@Model.Path</code></h1>
+@if (Model.Error is not null)
+{
+    <p class="error">@Model.Error</p>
+}
+else
+{
+    <p class="warn">This removes the ciphertext, the catalog entry and the lock line from the repo and pushes a commit. The old ciphertext stays in git history — <strong>to really revoke it, rotate the value in the service where it was issued</strong>.</p>
+    <p class="meta"><span class="badge">@Model.Type</span> @Model.Title</p>
+    @if (Model.References is { } refs)
+    {
+        <ul class="refs">
+            <li>Read by (readers): @(refs.Readers.Count > 0 ? string.Join(", ", refs.Readers) : "(none recorded)")</li>
+            <li>Links to (linked): @(refs.Linked.Count > 0 ? string.Join(", ", refs.Linked) : "(none)")</li>
+            <li>Linked by: @(refs.InboundLinked.Count > 0 ? string.Join(", ", refs.InboundLinked) : "(none)")</li>
+        </ul>
+        @if (refs.InboundLinked.Count > 0)
+        {
+            <p class="error">
+                These entries list it in linked, so the delete will be refused: @string.Join(", ", refs.InboundLinked).
+                Remove those references first, or force-delete with the CLI.
+            </p>
+        }
+    }
+    <form class="entry-form" method="post" action="/api/entry/delete" data-api="1">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="path" value="@Model.Path" />
+        <input type="hidden" name="confirm" value="@Model.ConfirmToken" />
+        <label>Type the entry name <code>@Model.Name</code> to confirm
+            <input name="typed" required autocomplete="off" data-must-equal="@Model.Name" />
+        </label>
+        <p class="actions">
+            <button type="submit" class="danger">Delete</button>
+            <a class="cancel" href="/entry/@Model.Path">Cancel</a>
+        </p>
+        <p class="status muted" id="status" aria-live="polite"></p>
+    </form>
+}

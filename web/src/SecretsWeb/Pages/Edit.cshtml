@@ -1,0 +1,26 @@
+@page "/entry/{domain}/{group}/{name}/edit"
+@model EditModel
+@{
+    ViewData["Title"] = "Edit entry";
+}
+<p class="crumb"><a href="/entry/@Model.Path">← Back to entry</a></p>
+<h1>Edit <code>@Model.Path</code></h1>
+@if (Model.Error is not null)
+{
+    <p class="error">@Model.Error</p>
+}
+else if (!Model.WriteEnabled)
+{
+    <p class="error">This instance is read-only (no push URL configured).</p>
+}
+else
+{
+    @if (Model.Form!.Content.Length == 0 && Model.Form.Type != "file")
+    {
+        <form method="post" class="load-current">
+            @Html.AntiForgeryToken()
+            <button type="submit" name="handler" value="Load" formaction="/entry/@Model.Path/edit?handler=Load">Load current content (decrypts and is audited)</button>
+        </form>
+    }
+    <partial name="_EntryForm" model="Model.Form" />
+}

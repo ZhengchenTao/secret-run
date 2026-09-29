@@ -1,0 +1,25 @@
+@model CatalogEntry
+@if (Model.HasAddress)
+{
+    <a class="entry@(Model.IsValid ? "" : " invalid")" href="/entry/@Model.Path">
+        <span class="title">@Model.DisplayTitle</span>
+        <span class="badge">@Model.Type</span>
+        @if (!Model.IsValid)
+        {
+            <span class="badge bad">unavailable</span>
+        }
+        <span class="path">@Model.Path</span>
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <span class="desc">@Model.Description</span>
+        }
+    </a>
+}
+else
+{
+    <div class="entry invalid">
+        <span class="title">@Model.DisplayTitle</span>
+        <span class="badge bad">unavailable</span>
+        <span class="path">catalog.toml, entry starting at line @Model.Line: @string.Join("; ", Model.Errors)</span>
+    </div>
+}

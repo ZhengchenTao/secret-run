@@ -1,0 +1,86 @@
+@page "/"
+@model IndexModel
+@{
+    ViewData["Title"] = "Entries";
+}
+@if (Model.WriteEnabled)
+{
+    <p class="rowactions"><a class="btn" href="/new">+ New entry</a></p>
+}
+<form method="get" action="/" class="search">
+    <input type="search" name="q" value="@Model.Query" placeholder="Search path / title / description / tags" autocomplete="off" />
+    <button type="submit">Search</button>
+</form>
+
+@if (Model.Unavailable)
+{
+    <p class="error">The secrets repo is currently not readable; see the server log for details.</p>
+}
+else if (Model.Query.Length > 0)
+{
+    <p class="muted">"@Model.Query": @Model.Results.Count of @Model.Total entries · <a href="/">Clear</a></p>
+    <ul class="entries">
+        @foreach (var e in Model.Results)
+        {
+            <li><partial name="_EntryRow" model="e" /></li>
+        }
+    </ul>
+}
+else
+{
+    var domains = Model.Results.GroupBy(e => e.Domain).ToList();
+    <p class="muted">@Model.Total entries</p>
+    <div class="with-nav">
+    <nav class="sidenav" aria-label="Contents">
+        @if (Model.Starred.Count > 0)
+        {
+            <p class="nav-domain">Favorites</p>
+            <ul><li><a href="#g-starred">★ Favorites <span class="count">@Model.Starred.Count</span></a></li></ul>
+        }
+        @foreach (var domain in domains)
+        {
+            <p class="nav-domain">@domain.Key</p>
+            <ul>
+                @foreach (var group in domain.GroupBy(e => e.Group))
+                {
+                    <li><a href="#g-@domain.Key-@group.Key">@group.Key <span class="count">@group.Count()</span></a></li>
+                }
+            </ul>
+        }
+    </nav>
+    <div class="listbody">
+    @if (Model.Starred.Count > 0)
+    {
+        <section class="tree">
+            <h2 class="domain">Favorites</h2>
+            <div class="tree group" id="g-starred">
+                <ul class="entries">
+                    @foreach (var e in Model.Starred)
+                    {
+                        <li><partial name="_EntryRow" model="e" /></li>
+                    }
+                </ul>
+            </div>
+        </section>
+    }
+    @foreach (var domain in domains)
+    {
+        <section class="tree">
+            <h2 class="domain">@domain.Key <span class="count">@domain.Count()</span></h2>
+            @foreach (var group in domain.GroupBy(e => e.Group))
+            {
+                <div class="tree group" id="g-@domain.Key-@group.Key">
+                    <h3 class="grp">@group.Key <span class="count">@group.Count()</span></h3>
+                    <ul class="entries">
+                        @foreach (var e in group)
+                        {
+                            <li><partial name="_EntryRow" model="e" /></li>
+                        }
+                    </ul>
+                </div>
+            }
+        </section>
+    }
+    </div>
+    </div>
+}

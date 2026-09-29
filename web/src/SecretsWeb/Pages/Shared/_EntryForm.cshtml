@@ -1,0 +1,67 @@
+@model SecretsWeb.Pages.EntryFormData
+@{
+    var isEdit = Model.IsEdit;
+}
+<form class="entry-form" method="post" action="@Model.Action" data-api="1" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    @if (isEdit)
+    {
+        <input type="hidden" name="expected" value="@Model.Expected" />
+    }
+
+    <label>Path (&lt;domain&gt;/&lt;group&gt;/&lt;name&gt;)
+        <input name="path" value="@Model.Path" required pattern="[a-z0-9][a-z0-9\-]*/[a-z0-9][a-z0-9\-]*/[a-z0-9][a-z0-9\-]*"
+               placeholder="personal/ssh/my-key" readonly="@(isEdit ? "readonly" : null)" />
+    </label>
+
+    <label>Type
+        @if (isEdit)
+        {
+            <input name="type" value="@Model.Type" readonly />
+        }
+        else
+        {
+            <select name="type" id="entry-type">
+                <option value="kv" selected="@(Model.Type == "kv")">kv (KEY=VALUE fields)</option>
+                <option value="doc" selected="@(Model.Type == "doc")">doc (markdown document)</option>
+                <option value="file" selected="@(Model.Type == "file")">file (any file)</option>
+            </select>
+        }
+    </label>
+
+    <label>Title <input name="title" value="@Model.Title" required /></label>
+    <label>Description (never put a value here) <input name="description" value="@Model.Description" /></label>
+    <label>Tags (comma separated) <input name="tags" value="@Model.Tags" /></label>
+    <label>Legacy pointer aliases (comma separated, e.g. notes:infra/db.md#Prod) <input name="aliases" value="@Model.Aliases" /></label>
+    <label>How to rotate (which console to rotate it in; no value) <input name="rotate" value="@Model.Rotate" /></label>
+    <label>Read by (readers, comma separated) <input name="readers" value="@Model.Readers" /></label>
+    <label>Priority (for ordering the incident checklist; empty = normal)
+        <select name="priority">
+            <option value="" selected="@(Model.Priority.Length == 0)">(not set)</option>
+            <option value="high" selected="@(Model.Priority == "high")">high</option>
+            <option value="normal" selected="@(Model.Priority == "normal")">normal</option>
+            <option value="low" selected="@(Model.Priority == "low")">low</option>
+        </select>
+    </label>
+    <label>Linked entries (linked: comma-separated entry paths that must be rotated together with this one) <input name="linked" value="@Model.Linked" /></label>
+
+    <fieldset class="file-only">
+        <legend>file only</legend>
+        <label>Target path (~/.ssh/… or {workspace}/…) <input name="target" value="@Model.Target" /></label>
+        <label>ACL <input name="acl" value="@Model.Acl" placeholder="private / inherit" /></label>
+        <label>Restrict to devices (machines, comma separated) <input name="machines" value="@Model.Machines" /></label>
+        <label>Upload a file (≤ 1 MB; use this for binary files) <input type="file" name="upload" /></label>
+    </fieldset>
+
+    <label>Content@(isEdit ? " (leave empty to keep the current content)" : "")
+        <textarea name="content" rows="12" spellcheck="false"
+                  placeholder="kv: one KEY=VALUE per line; doc: markdown; file: text content">@Model.Content</textarea>
+    </label>
+    <p class="muted">kv: one <code>KEY=VALUE</code> per line; KEY uses uppercase letters, digits and underscores and starts with a letter; lines starting with <code>#</code> are comments. Values are not unquoted or trimmed.</p>
+
+    <p class="actions">
+        <button type="submit">@(isEdit ? "Save" : "Create")</button>
+        <a class="cancel" href="@Model.CancelUrl">Cancel</a>
+    </p>
+    <p class="status muted" id="status" aria-live="polite"></p>
+</form>

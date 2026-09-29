@@ -1,0 +1,13 @@
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+# No local test artifacts or identity files in the repo
+*.age
+identity*.txt
+.env
+audit.log
+deploy_key
+deploy/data/
+deploy/repo.git/

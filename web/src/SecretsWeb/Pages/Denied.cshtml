@@ -1,0 +1,9 @@
+@page "/denied"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@{
+    ViewData["Title"] = "Access denied";
+    Response.StatusCode = 403;
+}
+<h1>Access denied</h1>
+<p>This account is not on the allowlist (<code>Auth:AllowedSubjects</code> / <code>Auth:AllowedEmails</code>).</p>
+<p><a href="/login">Sign in with a different account</a></p>

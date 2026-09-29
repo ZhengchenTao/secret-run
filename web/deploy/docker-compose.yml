@@ -1,0 +1,58 @@
+# secrets-web example deployment. Paths are relative to this file; identity.txt and .env never go into any repo.
+# Build first (from the web/ directory): `docker build -t secrets-web:local .`
+# Publish: the port only binds to 127.0.0.1. Put your access layer / reverse proxy in front of it
+# (e.g. `tailscale serve`, cloudflared + Cloudflare Access, a VPN-only nginx) and set Deployment__AccessLayer accordingly.
+services:
+  secrets-web:
+    image: secrets-web:local
+    container_name: secrets-web
+    restart: unless-stopped
+    user: "1654:1654"                 # same as the image's app user; identity.txt and data/ must be owned by it
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "127.0.0.1:8099:8080"
+    env_file:
+      - .env                          # Auth__ClientSecret, optional Alerts__WebhookUrl / Alerts__WebhookToken
+    environment:
+      - PublicOrigin=https://secrets.example.com
+      - Deployment__AccessLayer=reverse-proxy   # describe what protects this service (tailscale, cloudflare-access, vpn, ...)
+      - Auth__Authority=https://accounts.google.com
+      - Auth__ClientId=1234567890-example.apps.googleusercontent.com
+      - Auth__AllowedEmails__0=you@example.com
+      # - Auth__AllowedSubjects__0=<your id_token sub>
+      # Only if a reverse proxy on another address forwards to this container (trust exactly that proxy):
+      # - Network__KnownProxies__0=172.17.0.1
+      # - Network__KnownNetworks__0=10.0.0.0/8
+      - Repo__GitDir=/repo
+      - Repo__Identity=/identity/identity.txt
+      - Audit__Path=/data/audit.log
+      # Writes (create / edit / delete from the web UI): leave Repo__PushUrl empty for a read-only instance
+      - Repo__PushUrl=ssh://git@git.example.com/you/secrets.git
+      - Repo__Branch=main
+      - Repo__WorkDir=/data/work
+      - Repo__SshKey=/secrets/deploy_key
+      - Repo__KnownHosts=/secrets/known_hosts
+      - Repo__CommitAuthorName=secrets-web
+      - Repo__CommitAuthorEmail=secrets-web@example.com
+    volumes:
+      - ./repo.git:/repo:ro                       # bare repo of your secrets (a mirror or the git server's own copy)
+      - ./identity.txt:/identity/identity.txt:ro  # age identity of this service (a dedicated service-type recipient)
+      - ./data:/data                              # audit log, favorites, working clone for writes
+      # Optional, only for writes over ssh:
+      - ./deploy_key:/secrets/deploy_key:ro
+      - ./known_hosts:/secrets/known_hosts:ro
+    # Optional: if the git server runs as another container on this host, join its network and push to it by name
+    # (e.g. Repo__PushUrl=ssh://git@git-server:22/you/secrets.git):
+    # networks:
+    #   - default
+    #   - git_server_network
+
+# networks:
+#   git_server_network:
+#     external: true

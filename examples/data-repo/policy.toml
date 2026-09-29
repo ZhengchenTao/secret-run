@@ -1,0 +1,4 @@
+# Path rules -> recipients; the last matching rule wins. See FORMAT.md section 5.
+[[rule]]
+path = "store/**"
+recipients = ["@all"]

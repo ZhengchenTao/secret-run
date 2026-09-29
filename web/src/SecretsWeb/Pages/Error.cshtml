@@ -1,0 +1,9 @@
+@page "/error"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@attribute [Microsoft.AspNetCore.Mvc.IgnoreAntiforgeryToken]
+@{
+    ViewData["Title"] = "Error";
+    Response.StatusCode = 500;
+}
+<h1>Something went wrong</h1>
+<p>Internal server error; see the server log for details.</p>

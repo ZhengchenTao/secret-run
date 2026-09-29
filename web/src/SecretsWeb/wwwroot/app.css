@@ -1,0 +1,219 @@
+/* secrets-web styles: grouped cards.
+   Key points: (1) the entry list is grouped cards, reachable with a thumb on a phone; (2) paths / field names / secret values
+   are always monospace, so l vs 1 and 0 vs O can't be confused; (3) follows the system light/dark setting; (4) no external
+   dependencies, no CDN (the page lives behind an access layer and its CSP only allows 'self'). */
+
+:root {
+  color-scheme: light dark;
+  --bg: #f1f2f5;
+  --card: #ffffff;
+  --fg: #1b1d21;
+  --muted: #6b7280;
+  --line: #e9ebf0;
+  --line-strong: #dcdfe6;
+  --acc: #4759c4;
+  --acc-soft: #eef1ff;
+  --err: #c0362c;
+  --err-soft: #fdeceb;
+  --radius: 12px;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171b;
+    --card: #1d2026;
+    --fg: #e7e9ee;
+    --muted: #98a0ad;
+    --line: #272b33;
+    --line-strong: #333944;
+    --acc: #8b9bff;
+    --acc-soft: #23273a;
+    --err: #ff8b7e;
+    --err-soft: #34211f;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+        "Noto Sans SC", Arial, sans-serif;
+}
+
+a { color: var(--acc); text-decoration: none; }
+
+/* ---------- top bar ---------- */
+.top {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 16px; background: var(--card); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 5;
+}
+.brand { font-weight: 600; color: var(--fg); letter-spacing: .01em; }
+.logout { display: flex; gap: 8px; align-items: center; margin: 0; }
+.who { color: var(--muted); font-size: 13px; }
+
+main { max-width: 860px; margin: 0 auto; padding: 14px 16px 40px; display: flex; flex-direction: column; gap: 12px; }
+
+/* ---------- common controls ---------- */
+button, .btn {
+  font: inherit; font-size: 14px; padding: 7px 13px; min-height: 38px;
+  border: 1px solid var(--line-strong); border-radius: 9px;
+  background: var(--card); color: var(--fg); cursor: pointer;
+}
+button:hover, .btn:hover { border-color: var(--acc); color: var(--acc); }
+button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+summary:focus-visible, a:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.btn { display: inline-flex; align-items: center; }
+.btn.danger, button.danger { color: var(--err); border-color: var(--err); background: var(--err-soft); }
+.rowactions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+form.inline { display: inline; }
+
+.search { display: flex; gap: 8px; margin: 0; }
+.search input {
+  flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 9px 13px;
+  border: 1px solid var(--line-strong); border-radius: 11px; background: var(--card); color: var(--fg);
+}
+
+.muted { color: var(--muted); font-size: 14px; margin: 0; }
+.error { color: var(--err); margin: 0; }
+.desc { color: var(--muted); font-size: 14px; margin: 0; }
+
+/* ---------- list: domain / group / entry ---------- */
+/* ---------- left-hand contents (documentation-site style) ----------
+   Wide screens: a persistent contents column on the left, the list on the right; the contents stick to the top.
+   Phones: the contents become one horizontally scrollable row of group pills at the top; tapping jumps to the group —
+   there's no horizontal room for a sidebar on a phone, but "jump to a group quickly" is still needed. */
+.with-nav { display: block; }
+.sidenav { margin: 0 0 6px; }
+.sidenav .nav-domain {
+  margin: 0; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--muted);
+}
+.sidenav ul { list-style: none; display: flex; gap: 6px; margin: 6px 0 10px; padding: 0 0 2px;
+  overflow-x: auto; scrollbar-width: thin; }
+.sidenav li { flex: 0 0 auto; }
+.sidenav a {
+  display: inline-block; padding: 5px 11px; border-radius: 999px; font-size: 13px;
+  background: var(--card); border: 1px solid var(--line); color: var(--fg); white-space: nowrap;
+}
+.sidenav a:hover { border-color: var(--acc); color: var(--acc); }
+
+@media (min-width: 900px) {
+  main { max-width: 1120px; }
+  .with-nav { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .sidenav {
+    position: sticky; top: 72px; max-height: calc(100vh - 92px); overflow-y: auto;
+    margin: 0; padding-right: 4px; border-right: 1px solid var(--line);
+  }
+  .sidenav .nav-domain { margin: 14px 0 0; }
+  .sidenav .nav-domain:first-child { margin-top: 0; }
+  .sidenav ul { display: block; overflow: visible; margin: 4px 0 0; }
+  .sidenav li { margin: 0; }
+  .sidenav a {
+    display: block; padding: 5px 9px; border: 0; border-radius: 7px; background: none;
+    color: var(--muted); font-size: 13.5px; white-space: normal;
+  }
+  .sidenav a:hover { background: var(--acc-soft); color: var(--acc); }
+  .listbody { min-width: 0; }
+}
+
+/* anchor jumps must not end up hidden under the sticky top bar */
+.tree.group { scroll-margin-top: 76px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* No collapsing: domains and groups are always-expanded headings (this used to be details/summary with the
+   second-level groups collapsed by default, so every visit meant clicking them open). */
+.tree { margin: 0; }
+.domain {
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--muted); margin: 14px 2px 0;
+}
+.tree.group { margin: 0; }
+.grp { font-size: 13px; font-weight: 600; color: var(--fg); margin: 12px 2px 6px; }
+.count { color: var(--muted); font-weight: 400; font-size: 12px; margin-left: 4px; }
+
+.entries { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: var(--radius); overflow: hidden; }
+.entries li + li { border-top: 1px solid var(--line); }
+
+.entry { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 9px; padding: 12px 14px; color: var(--fg); }
+a.entry:hover { background: var(--acc-soft); }
+.entry .title { font-weight: 500; }
+.entry .path { flex-basis: 100%; color: var(--muted); font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; }
+.entry .desc { flex-basis: 100%; font-size: 13px; }
+.entry.invalid .title { color: var(--muted); }
+
+.badge {
+  font-family: var(--mono); font-size: 11px; line-height: 1.7; padding: 0 6px; border-radius: 5px;
+  background: var(--acc-soft); color: var(--acc);
+}
+.badge.bad { background: var(--err-soft); color: var(--err); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.tag { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--line); color: var(--muted); }
+
+/* ---------- entry details ---------- */
+.crumb { margin: 0; font-size: 14px; }
+.titlerow { display: flex; align-items: flex-start; gap: 10px; }
+.titlerow h1 { flex: 1; min-width: 0; }
+h1 { font-size: 21px; margin: 2px 0 0; letter-spacing: -.01em; overflow-wrap: anywhere; }
+
+/* favorites: the star at the top right of the entry page */
+.star {
+  flex: 0 0 auto; font-size: 20px; line-height: 1; padding: 4px 10px; min-height: 36px;
+  border: 1px solid var(--line-strong); border-radius: 9px; background: var(--card); color: var(--muted);
+}
+.star[data-on="1"] { color: #e8a317; border-color: #e8a317; background: var(--card); }
+.star:hover { border-color: #e8a317; color: #e8a317; }
+.star:disabled { opacity: .5; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; color: var(--muted); font-size: 13px; }
+.meta code { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; }
+
+.fields { list-style: none; margin: 0; padding: 0; background: var(--card); border-radius: var(--radius); overflow: hidden; }
+.field { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 14px; }
+.field + .field { border-top: 1px solid var(--line); }
+.fname { font-family: var(--mono); font-size: 12.5px; font-weight: 600; min-width: 8em; }
+.fvalue { flex: 1 1 10em; min-width: 0; font-family: var(--mono); font-size: 13.5px; overflow-wrap: anywhere; user-select: all; }
+.fvalue.masked { letter-spacing: .14em; color: var(--muted); user-select: none; }
+.actions { display: flex; gap: 8px; margin-left: auto; }
+.status { min-height: 1.2em; font-size: 13px; }
+
+.file { background: var(--card); border-radius: var(--radius); padding: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+.filetext, pre { flex-basis: 100%; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0;
+  background: var(--bg); border-radius: 9px; padding: 10px; font-family: var(--mono); font-size: 12.5px; }
+.doc-click { margin: 0; }
+
+/* ---------- doc body ---------- */
+.doc { background: var(--card); border-radius: var(--radius); padding: 4px 16px 14px; overflow-wrap: anywhere; }
+.doc h1, .doc h2, .doc h3 { letter-spacing: -.01em; }
+.doc h1 { font-size: 20px; }
+.doc h2 { font-size: 17px; margin-top: 1.4em; }
+.doc h3 { font-size: 15px; }
+.doc code { font-family: var(--mono); font-size: .88em; background: var(--bg); padding: 1px 5px; border-radius: 5px; }
+.doc pre code { background: none; padding: 0; }
+.doc blockquote { margin: 1em 0; padding: 2px 14px; border-left: 3px solid var(--line-strong); color: var(--muted); }
+.doc table { border-collapse: collapse; display: block; overflow-x: auto; font-size: 14px; }
+.doc th, .doc td { border: 1px solid var(--line-strong); padding: 6px 10px; text-align: left; }
+.doc th { background: var(--bg); }
+
+/* ---------- create / edit form ---------- */
+.entry-form { background: var(--card); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 2px; }
+.entry-form label { display: block; margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.entry-form input, .entry-form select, .entry-form textarea {
+  display: block; width: 100%; margin-top: 5px; font: inherit; font-size: 15px; padding: 9px 12px;
+  border: 1px solid var(--line-strong); border-radius: 9px; background: var(--bg); color: var(--fg);
+}
+.entry-form textarea { font-family: var(--mono); font-size: 13.5px; min-height: 9em; resize: vertical; }
+.entry-form input[readonly] { color: var(--muted); }
+.entry-form .rowactions { margin-top: 14px; }
+.cancel { align-self: center; color: var(--muted); }
+.refs { color: var(--muted); font-size: 13px; }
+
+@media (max-width: 600px) {
+  main { padding: 12px 12px 36px; }
+  .fname { flex-basis: 100%; min-width: 0; }
+  .actions { margin-left: 0; width: 100%; }
+  .actions button { flex: 1; }
+}

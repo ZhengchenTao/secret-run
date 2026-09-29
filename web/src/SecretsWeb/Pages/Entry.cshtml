@@ -1,0 +1,90 @@
+@page "/entry/{domain}/{group}/{name}"
+@model EntryModel
+@{
+    ViewData["Title"] = Model.Entry?.DisplayTitle ?? "Entry";
+    var e = Model.Entry;
+}
+<p class="crumb"><a href="/">← All entries</a></p>
+@Html.AntiForgeryToken()
+
+@if (e is null)
+{
+    <p class="error">@Model.Error</p>
+}
+else
+{
+    <div class="titlerow">
+        <h1>@e.DisplayTitle</h1>
+        <button type="button" class="star js-fav" data-path="@e.Path" data-on="@(Model.IsFavorite ? "1" : "0")"
+                aria-pressed="@(Model.IsFavorite ? "true" : "false")" title="Favorites are listed first">
+            @(Model.IsFavorite ? "★" : "☆")
+        </button>
+    </div>
+    <p class="meta"><span class="badge">@e.Type</span> <code>@e.Path</code> · updated @e.Updated</p>
+    @if (Model.WriteEnabled && e.HasAddress)
+    {
+        <p class="rowactions"><a class="btn" href="/entry/@e.Path/edit">Edit</a> <a class="btn danger" href="/entry/@e.Path/delete">Delete</a></p>
+    }
+    @if (!string.IsNullOrEmpty(e.Rotate))
+    {
+        <p class="muted">Rotate: @e.Rotate</p>
+    }
+    @if (e.Readers.Count > 0)
+    {
+        <p class="muted">Read by: @string.Join(", ", e.Readers)</p>
+    }
+    @if (!string.IsNullOrEmpty(e.Description))
+    {
+        <p class="desc">@e.Description</p>
+    }
+    @if (e.Tags.Count > 0)
+    {
+        <p class="tags">@foreach (var t in e.Tags) { <span class="tag">@t</span> }</p>
+    }
+
+    @if (Model.Error is not null)
+    {
+        <p class="error">@Model.Error</p>
+    }
+    else if (e.Type == "kv")
+    {
+        <ul class="fields" data-path="@e.Path">
+            @foreach (var f in e.Fields)
+            {
+                <li class="field" data-field="@f">
+                    <span class="fname">@f</span>
+                    <code class="fvalue masked">••••••••</code>
+                    <span class="actions">
+                        <button type="button" class="js-show">Show</button>
+                        <button type="button" class="js-copy">Copy</button>
+                    </span>
+                </li>
+            }
+        </ul>
+        <p class="status muted" id="status" aria-live="polite"></p>
+    }
+    else if (e.Type == "file")
+    {
+        <div class="file" data-path="@e.Path">
+            <button type="button" class="js-file">Show content</button>
+            <form method="post" action="/api/download" class="inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="path" value="@e.Path" />
+                <button type="submit">Download</button>
+            </form>
+            <pre class="filetext" hidden></pre>
+            <p class="status muted" id="status" aria-live="polite"></p>
+        </div>
+    }
+    else if (Model.DocHtml is not null)
+    {
+        <article class="doc">@Html.Raw(Model.DocHtml)</article>
+    }
+    else if (Model.DocNeedsClick)
+    {
+        <form method="post" class="doc-click">
+            @Html.AntiForgeryToken()
+            <button type="submit">Click to view</button>
+        </form>
+    }
+}

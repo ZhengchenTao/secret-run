@@ -1,0 +1,14 @@
+#!/bin/sh
+# pre-commit for a secret-run data repo (installed via `secret hooks install` -> core.hooksPath).
+# Rejects staged .age files without the age-encryption.org/v1 header or at paths outside FORMAT 7,
+# and any staged file outside the FORMAT 11 whitelist. Logic lives in SecretLib.ps1 (Sec-PreCommitProblems).
+here=$(cd "$(dirname "$0")" && pwd)
+cli="$here/../secret.ps1"
+repo=$(pwd)
+if command -v cygpath >/dev/null 2>&1; then cli=$(cygpath -w "$cli"); repo=$(cygpath -w "$repo"); fi
+# pwsh only if it actually starts: the Store build's execution alias is "Permission denied" inside sshd sessions
+# (seen on Windows 11), while powershell.exe 5.1 always works.
+if command -v pwsh >/dev/null 2>&1 && pwsh -NoProfile -NonInteractive -Command 'exit 0' >/dev/null 2>&1; then ps=pwsh
+elif command -v powershell.exe >/dev/null 2>&1; then ps=powershell.exe
+else echo "secret pre-commit: no PowerShell found; refusing commit" >&2; exit 1; fi
+"$ps" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$cli" --repo "$repo" hook-pre-commit

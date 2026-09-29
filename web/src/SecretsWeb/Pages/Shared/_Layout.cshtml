@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>@(ViewData["Title"] is string t ? t + " · " : "")secrets</title>
+    <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+<header class="top">
+    <a class="brand" href="/">secrets</a>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <form method="post" action="/logout" class="logout">
+            @Html.AntiForgeryToken()
+            <span class="who">@(User.FindFirst(OidcOptions.VerifiedEmailClaim)?.Value ?? User.FindFirst("sub")?.Value)</span>
+            <button type="submit">Sign out</button>
+        </form>
+    }
+</header>
+<main>
+    @RenderBody()
+</main>
+<script src="/app.js"></script>
+<script src="/form.js"></script>
+</body>
+</html>
