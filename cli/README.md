@@ -1,6 +1,8 @@
 # secret CLI
 
-Command-line tool for a secret-run data repo. The format contract is [../FORMAT.md](../FORMAT.md). 中文：[README.zh-CN.md](README.zh-CN.md)
+English | [简体中文](README.zh-CN.md)
+
+Command-line tool for a secret-run data repo. The format contract is [../FORMAT.md](../FORMAT.md).
 
 - Entry point: `secret.ps1`; two shims, `secret.cmd` (cmd / PowerShell) and `secret` (Git Bash / POSIX), prefer `pwsh` and fall back to `powershell.exe`.
 - Library: `SecretLib.ps1` (restricted TOML, kv, glob, recipient hash, lock, age calls, ACLs); other scripts can dot-source it.

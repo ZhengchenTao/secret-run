@@ -1,8 +1,10 @@
 # FORMAT —— secret-run 数据仓格式契约（v1）
 
+[English](FORMAT.md) | 简体中文
+
 > 这是 `secret` CLI（`cli/`，PowerShell）和网页端（`web/`，.NET）**共同遵守的唯一契约**。任何一方想改格式，先改本文、升 `catalog.toml` 里 `[[meta]]` 的 `format`，再改实现。
 > 一句话：**纯 age 文件 + 受限 TOML**，两边都不做自定义加密或封装。
-> English: [FORMAT.md](FORMAT.md)（两份内容一致，有出入以英文版为准）
+> 两份内容一致，有出入以英文版为准。
 
 ## 一、仓目录
 

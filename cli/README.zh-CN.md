@@ -1,6 +1,8 @@
 # secret CLI
 
-secret-run 数据仓的命令行工具。格式契约见 [../FORMAT.zh-CN.md](../FORMAT.zh-CN.md)。English: [README.md](README.md)
+[English](README.md) | 简体中文
+
+secret-run 数据仓的命令行工具。格式契约见 [../FORMAT.zh-CN.md](../FORMAT.zh-CN.md)。
 
 - 入口：`secret.ps1`；`secret.cmd`（cmd / PowerShell）、`secret`（Git Bash / POSIX）两个 shim，优先 `pwsh`，没有就用 `powershell.exe`。
 - 库：`SecretLib.ps1`（受限 TOML、kv、glob、收件人哈希、lock、age 调用、ACL），别的脚本可以 dot-source 复用。

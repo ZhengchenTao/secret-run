@@ -1,6 +1,6 @@
 # secrets-web
 
-*English: [README.md](README.md)*
+[English](README.md) | 简体中文
 
 一个自托管的小型网页，用来查看和维护一个用 [age](https://age-encryption.org) 加密的密钥 git 仓 —— 也就是 `secret` CLI
 管理的同一个仓。它读取裸仓，用**自己的** age identity 在**服务端**解密，通过任意 OpenID Connect 提供方登录（文档以

@@ -1,8 +1,8 @@
 # secret-run
 
-**让密钥的值不进 AI 编程助手的上下文。** 一个小型密钥管理工具：数据是私有 git 仓里的纯 [age](https://age-encryption.org) 密文；CLI 只把值注入子进程、子进程把值打出来时自动遮掉；另有一个可选的自建网页端给人用。
+[English](README.md) | 简体中文
 
-English: [README.md](README.md)
+**让密钥的值不进 AI 编程助手的上下文。** 一个小型密钥管理工具：数据是私有 git 仓里的纯 [age](https://age-encryption.org) 密文；CLI 只把值注入子进程、子进程把值打出来时自动遮掉；另有一个可选的自建网页端给人用。
 
 ## 为什么
 

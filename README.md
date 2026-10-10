@@ -1,8 +1,8 @@
 # secret-run
 
-**Keep secret values out of your AI coding agent's context.** A small secrets manager built on plain [age](https://age-encryption.org) files in a private git repo, with a CLI that injects values into a child process only — and masks them if the child prints them — plus an optional self-hosted web UI for humans.
+English | [简体中文](README.zh-CN.md)
 
-中文：[README.zh-CN.md](README.zh-CN.md)
+**Keep secret values out of your AI coding agent's context.** A small secrets manager built on plain [age](https://age-encryption.org) files in a private git repo, with a CLI that injects values into a child process only — and masks them if the child prints them — plus an optional self-hosted web UI for humans.
 
 ## Why
 

@@ -1,8 +1,9 @@
 # secret-run Claude Code plugin
 
+English | [简体中文](README.zh-CN.md)
+
 A [Claude Code](https://code.claude.com) plugin that teaches an AI coding agent how to use
-[secret-run](../README.md) safely, and backs that up with a mechanical guard. 中文：
-[README.zh-CN.md](README.zh-CN.md)
+[secret-run](../README.md) safely, and backs that up with a mechanical guard.
 
 ## What it adds
 

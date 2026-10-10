@@ -1,6 +1,8 @@
 # secret-run 的 Claude Code plugin
 
-一个 [Claude Code](https://code.claude.com) plugin，教 AI 编程助手安全使用 [secret-run](../README.zh-CN.md)，并用一个机械护栏兜底。English: [README.md](README.md)
+[English](README.md) | 简体中文
+
+一个 [Claude Code](https://code.claude.com) plugin，教 AI 编程助手安全使用 [secret-run](../README.zh-CN.md)，并用一个机械护栏兜底。
 
 ## 包含什么
 

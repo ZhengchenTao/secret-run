@@ -1,8 +1,9 @@
 # FORMAT — secret-run data repo contract (v1)
 
+English | [简体中文](FORMAT.zh-CN.md)
+
 > The **single contract** shared by the `secret` CLI (`cli/`, PowerShell) and the web UI (`web/`, .NET). Anyone who wants to change the format changes this document first, bumps `format` in the `[[meta]]` block of `catalog.toml`, then changes the implementations.
 > One line: **plain age files + a restricted TOML subset**. Neither side adds custom crypto or wrapping.
-> 中文版：[FORMAT.zh-CN.md](FORMAT.zh-CN.md)
 
 ## 1. Repository layout
 

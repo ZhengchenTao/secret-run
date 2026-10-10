@@ -1,6 +1,6 @@
 # secrets-web
 
-*Chinese version: [README.zh-CN.md](README.zh-CN.md)*
+English | [简体中文](README.zh-CN.md)
 
 A small self-hosted web UI for a git repository of [age](https://age-encryption.org)-encrypted secrets — the same repository
 the `secret` CLI manages. It reads a bare git repo, decrypts **server-side** with its own age identity, signs users in with
