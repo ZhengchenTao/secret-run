@@ -137,7 +137,10 @@ public static class AuthSetup
         oidc.UseTokenLifetime = false;
         oidc.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         oidc.Scope.Clear();
-        foreach (var s in o.Scopes.Length > 0 ? o.Scopes : OidcOptions.DefaultScopes) oidc.Scope.Add(s);
+        // Config binding can only overwrite an array element by index, never shrink it (appsettings/env array
+        // edits commonly leave a trailing duplicate, e.g. Scopes = ["openid", "profile", "profile"]). Dedupe here
+        // instead of relying on the concrete type behind ICollection<string> to do it for us.
+        foreach (var s in (o.Scopes.Length > 0 ? o.Scopes : OidcOptions.DefaultScopes).Distinct()) oidc.Scope.Add(s);
         oidc.TokenValidationParameters.ValidAlgorithms = ["RS256"];
         oidc.TokenValidationParameters.RequireSignedTokens = true;
         oidc.TokenValidationParameters.NameClaimType = "sub";

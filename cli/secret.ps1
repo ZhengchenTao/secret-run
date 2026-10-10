@@ -1152,7 +1152,11 @@ function Cmd-Resolve([string[]]$Argv) {
     if ($p.Pos.Count -ne 1) { Sec-Fail 'usage: secret resolve <old pointer>' }
     $ctx = Open-Ctx
     $n = Sec-AliasNormalize $p.Pos[0]
-    if (-not (Sec-AliasHasSource $n.Path)) { Sec-Fail 'old pointer needs its source prefix, e.g. notes:path/to/file.md#Section' }
+    if (-not (Sec-AliasHasSource $n.Path)) {
+        $guess = Sec-AliasGuessSource $n.Path
+        if ($null -ne $guess) { $n = Sec-AliasNormalize ($guess + ':' + $n.Full) }
+        else { Sec-Fail 'old pointer needs its source prefix, e.g. notes:path/to/file.md#Section' }
+    }
     $hits = New-Object 'System.Collections.Generic.List[string]'
     foreach ($e in $ctx.Catalog.Entries) { foreach ($a in $e.NormAliases) { if ($a.Full -ceq $n.Full -and -not $hits.Contains($e.Path)) { $hits.Add($e.Path) } } }
     if ($hits.Count -eq 0) {

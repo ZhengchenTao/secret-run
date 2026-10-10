@@ -169,7 +169,7 @@ Assert (($written -join ',') -ceq 'path,type,title,description,fields,target,acl
 $T = [IO.Path]::Combine([IO.Path]::GetTempPath(), 'secret-selftest-' + (Sec-RandHex 6))
 [void][IO.Directory]::CreateDirectory($T)
 $saved = @{}
-foreach ($v in @('SECRET_REPO', 'SECRET_IDENTITY', 'SECRET_HOME', 'SECRET_WORKSPACE', 'SECRET_STATE_DIR', 'SECRET_DESKTOP', 'SECRET_DEVICE_NAME', 'SECRET_SCAN_LOGS', 'SECRET_INVENTORY_TEMPLATE', 'OneDrive', 'EDITOR')) { $saved[$v] = [Environment]::GetEnvironmentVariable($v) }
+foreach ($v in @('SECRET_REPO', 'SECRET_IDENTITY', 'SECRET_HOME', 'SECRET_WORKSPACE', 'SECRET_STATE_DIR', 'SECRET_DESKTOP', 'SECRET_DEVICE_NAME', 'SECRET_SCAN_LOGS', 'SECRET_INVENTORY_TEMPLATE', 'SECRET_RESOLVE_GUESS', 'OneDrive', 'EDITOR')) { $saved[$v] = [Environment]::GetEnvironmentVariable($v) }
 try {
     $repo = [IO.Path]::Combine($T, 'repo')
     [void][IO.Directory]::CreateDirectory($repo)
@@ -180,6 +180,7 @@ try {
     $env:SECRET_STATE_DIR = [IO.Path]::Combine($T, 'state')
     $env:SECRET_DESKTOP = [IO.Path]::Combine($T, 'desktop')
     $env:SECRET_DEVICE_NAME = 'dev-a'
+    $env:SECRET_RESOLVE_GUESS = $null
     $env:OneDrive = $null
     foreach ($d in @($env:SECRET_HOME, $env:SECRET_WORKSPACE, $env:SECRET_DESKTOP)) { [void][IO.Directory]::CreateDirectory($d) }
     [IO.File]::WriteAllBytes([IO.Path]::Combine($repo, 'recipients.toml'), (B "# recipients (public keys)`n"))
@@ -324,6 +325,19 @@ try {
     $r = RunCli @('resolve', ('[[notes:secrets/' + $zh + '/app]]'))
     Assert ($r.ExitCode -eq 0 -and $r.Text.Trim() -ceq 'secret:personal/test/kv1') 'resolve falls back to path without anchor'
     Assert ((RunCli @('resolve', 'wiki:old/nothing.md')).ExitCode -eq 1) 'resolve no match exit 1'
+
+    # ---- resolve: SECRET_RESOLVE_GUESS guesses the source of an old pointer (C4)
+    $env:SECRET_RESOLVE_GUESS = 'secrets/=wrong-source;secrets/' + $zh + '/=notes'
+    $r = RunCli @('resolve', ('secrets/' + $zh + '/app.md#App'))
+    Assert ($r.ExitCode -eq 0 -and $r.Text.Trim() -ceq 'secret:personal/test/kv1') 'resolve: SECRET_RESOLVE_GUESS picks the longest matching prefix'
+    $r = RunCli @('resolve', ('[[secrets/' + $zh + '/app]]'))
+    Assert ($r.ExitCode -eq 0 -and $r.Text.Trim() -ceq 'secret:personal/test/kv1') 'resolve: SECRET_RESOLVE_GUESS also applies through [[...]] wrapping'
+    $env:SECRET_RESOLVE_GUESS = 'other/=wrong-source'
+    $r = RunCli @('resolve', ('secrets/' + $zh + '/app.md#App'))
+    Assert ($r.ExitCode -eq 1 -and $r.Stderr.Contains('source prefix')) 'resolve: SECRET_RESOLVE_GUESS with no matching prefix still refuses'
+    $env:SECRET_RESOLVE_GUESS = $null
+    $r = RunCli @('resolve', ('secrets/' + $zh + '/app.md#App'))
+    Assert ($r.ExitCode -eq 1 -and $r.Stderr.Contains('source prefix')) 'resolve: without SECRET_RESOLVE_GUESS the old behavior is unchanged'
 
     # ---- check clean
     $r = RunCli @('check')

@@ -28,6 +28,7 @@ secret-run 数据仓的命令行工具。格式契约见 [../FORMAT.zh-CN.md](..
 | `SECRET_WORKSPACE` | `{workspace}/` 落地目标的根目录。不设 = 这类目标一律拒绝 |
 | `SECRET_SCAN_LOGS` | `check` 额外扫描泄露的日志文件（用平台的路径分隔符隔开） |
 | `SECRET_INVENTORY_TEMPLATE` | `inventory` 用的模板，例如自带的 `inventory-template.zh-CN.md` |
+| `SECRET_RESOLVE_GUESS` | 只给 `resolve` 用：`"<路径前缀>=<来源>;<路径前缀>=<来源>;…"`。旧指针不带来源前缀时，按最长匹配的路径前缀猜来源，不再直接拒绝。不设，或没有前缀匹配：`resolve` 照旧报 `old pointer needs its source prefix` |
 | `SECRET_HOME` / `SECRET_STATE_DIR` / `SECRET_DESKTOP` / `SECRET_DEVICE_NAME` | **只给自测用**：分别覆盖家目录、`%LOCALAPPDATA%\secret`、桌面目录和本机设备名 |
 
 ## 注意事项
@@ -69,7 +70,7 @@ secret-run 数据仓的命令行工具。格式契约见 [../FORMAT.zh-CN.md](..
 | `secret run [-e NAME=<path>#<FIELD>]... [-a [PREFIX=]<path>]... [--mask\|--no-mask] -- <cmd> [args]` | 只把值注入子进程的环境变量，返回子进程退出码；输出遮罩见上文。`.ps1` 用当前宿主执行，`.cmd` / `.bat` 经 `cmd.exe /c` 执行 |
 | `secret materialize [--approve] [--force] [--dry-run] [<path>...]` | 把 file 条目落地到 `target`（只允许 `~/.ssh/`、`{workspace}/`）。首次落地的 `(path, target)` 组合要加 `--approve`，批准记录在 `%LOCALAPPDATA%\secret\approved-targets.txt`。输出标记：`+` 已写入 / `=` 相同 / `!` 不同，已跳过（`--force` 覆盖）/ `?` 未批准 / `X` 出错 |
 | `secret list [<prefix>]` / `secret info <path>` | 只读 catalog，不解密 |
-| `secret resolve <旧指针>` | 通过条目的 `aliases`，把旧指针（如 `notes:ops/chat-bot.md#凭据`）解析成 `secret:<path>` |
+| `secret resolve <旧指针>` | 通过条目的 `aliases`，把旧指针（如 `notes:ops/chat-bot.md#凭据`）解析成 `secret:<path>`。不带来源前缀时，设了 `SECRET_RESOLVE_GUESS` 就按它猜，没设就拒绝 |
 | `secret check [--sample <n>] [--web <url>] [--scan-log <path>]... [--no-log-scan] [--quick]` | 按 FORMAT §十二 做全部检查，每行 `<级别> <检查项> <名字>`；退出码 0 / 2（有 WARN）/ 1（有 ERROR）。另外：`hooks` 核对数据仓的 `core.hooksPath` 是否指向 `cli/githooks`（不一致是 ERROR，提示跑 `secret hooks install`）；`log-leak` 在日志（`%LOCALAPPDATA%\secret\*.log`、`SECRET_SCAN_LOGS`、`--scan-log`）里扫条目的值，命中输出 `ERROR log-leak <日志文件名> <条目#字段>`，**只报名字不报值**。阈值：kv 值短于 4 字符跳过；file 条目只取"像单行凭据"的行（≥ 12 字符、无空白）；路径以 `-pub` 结尾的条目跳过。扫描全绿只代表「没扫到」，不等于没泄露。`git` 项对比 HEAD 与缓存的 `@{u}`，从不 fetch（离线也不报错），领先或落后时 WARN |
 | `secret recovery new [--out <file>] [--replace]` | 生成恢复 identity（默认写到桌面，不显示私钥），登记为 active 的 `recovery` 收件人 |
 | `secret recovery drill --identity <恢复钥匙> [<path>]` | 只用恢复钥匙解开一个条目，和本机解出的结果比较，输出 `match true\|false` |
@@ -85,3 +86,7 @@ pwsh -NoProfile -File cli/test/selftest.ps1
 ```
 
 只使用临时目录里的测试仓、测试 identity 和随机测试值，跑完自动清理；全部通过时退出码为 0。
+
+## 贡献规则
+
+改 `cli/` 下任何东西，推送前都要在 Windows PowerShell 5.1（`powershell.exe`）和 PowerShell 7（`pwsh`）**两边**都跑一遍 `cli/test/selftest.ps1` 并全过——没有 CI 兜底，5.1 独有的问题不会被别的方式挡下来。`cli/` 下的文件（源码和测试）都保持纯 ASCII，不出现非 ASCII 字节。

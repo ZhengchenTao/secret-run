@@ -482,6 +482,16 @@ public class AuthUnitTests
         Assert.Equal(["openid", "email", "profile"], o.Scope.ToArray());
         Assert.Equal("query", o.ResponseMode);
     }
+
+    [Fact]
+    public void Configured_Scopes_Are_Deduplicated()
+    {
+        // Config binding (appsettings / env) can only overwrite an array element by index, never shrink it, so a
+        // trailing duplicate is a common way for Auth:Scopes to end up with a repeated entry.
+        var o = new OpenIdConnectOptions();
+        AuthSetup.ConfigureOidc(o, new OidcOptions { Authority = "https://auth.example.invalid", ClientId = "x", ClientSecret = "y", Scopes = ["openid", "profile", "profile"] });
+        Assert.Equal(["openid", "profile"], o.Scope.ToArray());
+    }
 }
 
 /// <summary>Real authentication (not replaced): challenge behavior of the cookie scheme (pages 302 to /login, API 401), and /login starting the OIDC challenge.</summary>

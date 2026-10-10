@@ -810,6 +810,29 @@ function Sec-AliasHasSource([string]$NormalizedPath) {
     return ($NormalizedPath -cmatch '^[a-z][a-z0-9-]*:')
 }
 
+# C4: guess the source of an old pointer that has no source prefix, from SECRET_RESOLVE_GUESS
+# ("<path prefix>=<source>;<path prefix>=<source>;..."). The longest matching prefix wins; $null when
+# the variable is unset or no prefix matches (callers then keep the current "needs its source prefix" error).
+function Sec-AliasGuessSource([string]$NormalizedPath) {
+    $spec = [Environment]::GetEnvironmentVariable('SECRET_RESOLVE_GUESS')
+    if ([string]::IsNullOrEmpty($spec)) { return $null }
+    $best = $null
+    $bestLen = -1
+    foreach ($part in $spec.Split(';')) {
+        $t = $part.Trim()
+        if ($t.Length -eq 0) { continue }
+        $eq = $t.IndexOf([char]'=')
+        if ($eq -le 0 -or $eq -ge $t.Length - 1) { continue }
+        $prefix = $t.Substring(0, $eq)
+        $source = $t.Substring($eq + 1)
+        if ($NormalizedPath.StartsWith($prefix, [StringComparison]::Ordinal) -and $prefix.Length -gt $bestLen) {
+            $best = $source
+            $bestLen = $prefix.Length
+        }
+    }
+    return $best
+}
+
 # A source prefix (^[a-z][a-z0-9-]*:) and a non-empty path part (FORMAT 6 value constraints).
 function Sec-AliasIsValid($Normalized) {
     return ($Normalized.Path -cmatch '^[a-z][a-z0-9-]*:.')

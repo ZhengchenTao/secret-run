@@ -28,6 +28,7 @@ The point of the design: **values reach the process that needs them, not the mod
 | `SECRET_WORKSPACE` | Root for `{workspace}/` materialize targets. Unset = such targets are refused |
 | `SECRET_SCAN_LOGS` | Extra log files `check` scans for leaked values (separated by the platform path separator) |
 | `SECRET_INVENTORY_TEMPLATE` | Template for `inventory`, e.g. the bundled `inventory-template.zh-CN.md` |
+| `SECRET_RESOLVE_GUESS` | `resolve` only: `"<path prefix>=<source>;<path prefix>=<source>;..."`. When an old pointer has no source prefix, the longest matching path prefix picks its source instead of failing. Unset, or no prefix matches: `resolve` keeps refusing with `old pointer needs its source prefix` |
 | `SECRET_HOME` / `SECRET_STATE_DIR` / `SECRET_DESKTOP` / `SECRET_DEVICE_NAME` | **Test-only**: override the home dir, `%LOCALAPPDATA%\secret`, the desktop and the device name |
 
 ## Notes
@@ -69,7 +70,7 @@ Commands that write the repo (`init` / `recipients add|approve|remove` / `rekey`
 | `secret run [-e NAME=<path>#<FIELD>]... [-a [PREFIX=]<path>]... [--mask\|--no-mask] -- <cmd> [args]` | Inject values into the child's environment only and return its exit code; output masking as described above. `.ps1` runs in the current host, `.cmd` / `.bat` through `cmd.exe /c` |
 | `secret materialize [--approve] [--force] [--dry-run] [<path>...]` | Write file entries to their `target` (only under `~/.ssh/` and `{workspace}/`). A new `(path, target)` pair needs `--approve`; approvals live in `%LOCALAPPDATA%\secret\approved-targets.txt`. Markers: `+` written / `=` same / `!` differs, skipped (`--force` overwrites) / `?` not approved / `X` error |
 | `secret list [<prefix>]` / `secret info <path>` | Catalog only, nothing decrypted |
-| `secret resolve <old pointer>` | Turn an old pointer (`notes:ops/chat-bot.md#Credentials`) into `secret:<path>` via the entries' `aliases` |
+| `secret resolve <old pointer>` | Turn an old pointer (`notes:ops/chat-bot.md#Credentials`) into `secret:<path>` via the entries' `aliases`. A pointer with no source prefix is guessed from `SECRET_RESOLVE_GUESS` when set, else refused |
 | `secret check [--sample <n>] [--web <url>] [--scan-log <path>]... [--no-log-scan] [--quick]` | All FORMAT §12 checks, one line per result `<LEVEL> <check> <name>`; exit 0 / 2 (WARN) / 1 (ERROR). Also: `hooks` (the data repo's `core.hooksPath` must point at `cli/githooks`, else ERROR — run `secret hooks install`); `log-leak` scans logs (`%LOCALAPPDATA%\secret\*.log`, `SECRET_SCAN_LOGS`, `--scan-log`) for the entries' values and reports `ERROR log-leak <log file> <path#field>` — **names only, never values**. Thresholds: kv values under 4 characters are skipped; for file entries only credential-looking single lines (12+ characters, no whitespace) are searched; entries ending in `-pub` are skipped. A clean scan means "nothing found", not "nothing leaked". `git` compares HEAD with the cached `@{u}` without fetching (offline-safe) and WARNs when ahead or behind |
 | `secret recovery new [--out <file>] [--replace]` | Create a recovery identity (written to the desktop by default, private key never printed) and register it as the active `recovery` recipient |
 | `secret recovery drill --identity <recovery key> [<path>]` | Decrypt one entry with the recovery key only and compare with this machine's result: `match true\|false` |
@@ -85,3 +86,7 @@ pwsh -NoProfile -File cli/test/selftest.ps1
 ```
 
 Uses only a temp repo, test identities and random test values, and cleans up afterwards; exit 0 when everything passes.
+
+## Contributing
+
+Any change under `cli/` must pass `cli/test/selftest.ps1` under **both** Windows PowerShell 5.1 (`powershell.exe`) and PowerShell 7 (`pwsh`) before it is pushed — there is no CI to catch a 5.1-only regression. Keep every file under `cli/` plain ASCII (no non-ASCII bytes), on both the source files and the test files.
