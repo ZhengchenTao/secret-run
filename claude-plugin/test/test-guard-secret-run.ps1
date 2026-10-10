@@ -103,8 +103,8 @@ Assert-Deny 'Read a Desktop recovery identity file' 'Read' @{ file_path = 'C:\Us
 Assert-Deny 'Read recovery/recovery-identity.age' 'Read' @{ file_path = 'C:\secrets\recovery\recovery-identity.age' }
 Assert-Deny 'Grep over the identity file' 'Grep' @{ path = '/home/user/.config/secrets/identity.txt'; pattern = 'age1' }
 Assert-Deny 'cat the identity file from Bash' 'Bash' @{ command = 'cat ~/.config/secrets/identity.txt' }
-Assert-Allow 'Read an unrelated project file' 'Read' @{ file_path = 'C:\Workspace\secret-run\README.md' }
-Assert-Allow 'Grep with "secret" in the search pattern, not the path' 'Grep' @{ path = 'C:\Workspace\secret-run\docs'; pattern = 'secret:[a-z/-]+#[A-Z_]+' }
+Assert-Allow 'Read an unrelated project file' 'Read' @{ file_path = 'C:\src\myproject\README.md' }
+Assert-Allow 'Grep with "secret" in the search pattern, not the path' 'Grep' @{ path = 'C:\src\myproject\docs'; pattern = 'secret:[a-z/-]+#[A-Z_]+' }
 
 # ---- 5. reading a credential-shaped env var directly: deny ----
 Assert-Deny 'printenv a KEY-shaped var' 'Bash' @{ command = 'printenv API_KEY' }
