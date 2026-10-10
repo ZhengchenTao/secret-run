@@ -2,7 +2,7 @@
   "name": "secret-run",
   "description": "secret-run's own Claude Code plugin: a skill that tells an agent how to use the secret CLI safely, plus a PreToolUse hook that enforces it mechanically.",
   "owner": {
-    "name": "secret-run maintainers"
+    "name": "ZhengchenTao"
   },
   "plugins": [
     {

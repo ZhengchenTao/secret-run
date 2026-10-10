@@ -72,7 +72,7 @@ skill 教 agent 上面这些规则，一个 PreToolUse hook 把其中大部分�
 裸 `age -d`、读 identity / 恢复钥匙文件）。见 [`claude-plugin/README.zh-CN.md`](claude-plugin/README.zh-CN.md)。
 
 ```
-/plugin marketplace add <owner>/secret-run
+/plugin marketplace add ZhengchenTao/secret-run
 /plugin install secret-run@secret-run
 ```
 

@@ -28,7 +28,7 @@ From a Claude Code terminal session, once this repository (or your fork/mirror o
 over git:
 
 ```
-/plugin marketplace add <owner>/secret-run
+/plugin marketplace add ZhengchenTao/secret-run
 /plugin install secret-run@secret-run
 ```
 

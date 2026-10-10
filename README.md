@@ -73,7 +73,7 @@ mechanically (denies `get`/`show`/`edit`, raw `age -d`, and reads of the identit
 See [`claude-plugin/README.md`](claude-plugin/README.md).
 
 ```
-/plugin marketplace add <owner>/secret-run
+/plugin marketplace add ZhengchenTao/secret-run
 /plugin install secret-run@secret-run
 ```
 

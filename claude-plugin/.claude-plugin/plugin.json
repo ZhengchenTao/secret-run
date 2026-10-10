@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Teaches an AI coding agent to use secret-run safely (secret run -e NAME=<path>#<FIELD> -- <command>, secret:<path>#<FIELD> pointers, <concealed:NAME> output masking) and backs it with a PreToolUse hook that blocks get/show/edit, raw age -d, SecretLib decrypt helpers, and reads of the identity/recovery files.",
   "author": {
-    "name": "secret-run maintainers"
+    "name": "ZhengchenTao"
   },
   "license": "MIT",
   "keywords": ["secrets", "credentials", "age", "cli", "security", "env"]

@@ -14,7 +14,7 @@
 在 Claude Code 终端会话里，确认这个仓（或你的 fork / 镜像）能被 git 访问到之后：
 
 ```
-/plugin marketplace add <owner>/secret-run
+/plugin marketplace add ZhengchenTao/secret-run
 /plugin install secret-run@secret-run
 ```
 
