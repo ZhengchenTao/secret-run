@@ -1,0 +1,22 @@
+{
+  "description": "secret-run guard: denies secret get/show/edit, raw age -d, SecretLib decrypt helpers, reads of the identity/recovery files, and a secret run child command that prints back the value it was just given.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Grep|Glob|NotebookRead",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pwsh",
+            "args": [
+              "-NoProfile",
+              "-File",
+              "${CLAUDE_PLUGIN_ROOT}/hooks/guard-secret-run.ps1"
+            ],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

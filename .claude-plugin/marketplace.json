@@ -1,0 +1,14 @@
+{
+  "name": "secret-run",
+  "description": "secret-run's own Claude Code plugin: a skill that tells an agent how to use the secret CLI safely, plus a PreToolUse hook that enforces it mechanically.",
+  "owner": {
+    "name": "secret-run maintainers"
+  },
+  "plugins": [
+    {
+      "name": "secret-run",
+      "source": "./claude-plugin",
+      "description": "Use `secret run -e NAME=<path>#<FIELD> -- <command>` to inject values; never get/show/edit, never decrypt directly. Ships a hook that denies the risky commands."
+    }
+  ]
+}

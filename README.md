@@ -65,6 +65,18 @@ Put `cli/` on your PATH to type `secret` directly. More machines: `secret init` 
 
 In Claude Code, also deny the Read tool on key material: `"permissions": { "deny": ["Read(~/.config/secrets/**)", "Read(~/.ssh/*.pem)"] }`.
 
+## Use with Claude Code
+
+A [Claude Code](https://code.claude.com) plugin ships in [`claude-plugin/`](claude-plugin/): a
+skill that teaches an agent the rules above, and a PreToolUse hook that enforces most of them
+mechanically (denies `get`/`show`/`edit`, raw `age -d`, and reads of the identity/recovery files).
+See [`claude-plugin/README.md`](claude-plugin/README.md).
+
+```
+/plugin marketplace add <owner>/secret-run
+/plugin install secret-run@secret-run
+```
+
 ## Security model — read before use
 
 - **One identity decrypts everything encrypted to it.** Losing a device means rotating every value it could read. `rekey` only changes future ciphertext; old ciphertext in git history still opens with the old key. Use `policy.toml` to narrow what each recipient gets.

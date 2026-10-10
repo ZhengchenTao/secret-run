@@ -65,6 +65,17 @@ secret-run/cli/secret run -e API_KEY=personal/demo/api#API_KEY -- bash -c 'curl 
 
 Claude Code 里再用 `permissions.deny` 挡住 Read 工具读钥匙：`"permissions": { "deny": ["Read(~/.config/secrets/**)", "Read(~/.ssh/*.pem)"] }`。
 
+## 配合 Claude Code 用
+
+[`claude-plugin/`](claude-plugin/) 下是一个 [Claude Code](https://code.claude.com) plugin：一个
+skill 教 agent 上面这些规则，一个 PreToolUse hook 把其中大部分机械兜底（拦 `get`/`show`/`edit`、
+裸 `age -d`、读 identity / 恢复钥匙文件）。见 [`claude-plugin/README.zh-CN.md`](claude-plugin/README.zh-CN.md)。
+
+```
+/plugin marketplace add <owner>/secret-run
+/plugin install secret-run@secret-run
+```
+
 ## 安全模型——用之前先看
 
 - **一把 identity 能解开加密给它的全部条目。** 丢一台设备就要轮换它能读到的所有值。`rekey` 只影响以后的密文，git 历史里的旧密文用旧钥匙照样能解。用 `policy.toml` 收窄每个收件人能拿到的范围。
