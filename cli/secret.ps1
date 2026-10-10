@@ -1184,6 +1184,9 @@ function Get-LeakNeedles($Ctx, [string]$Identity, [string]$LocalKey, $Expected, 
             try { $pairs = Sec-KvParse $plain } catch { continue }
             foreach ($kv in $pairs) {
                 if ($kv.Value.Length -lt 8) { continue }   # short values (prod, 8080, true) hit in every log: noise beats signal
+                # Account names are identifiers, not credentials: a Git server user name is also the owner segment of
+                # every repo path a sync log prints. USERNAME, USER, X_USERNAME, X_USER, USERNAME_1 -- but not USER_KEY.
+                if ($kv.Key -cmatch '(^|_)USER(NAME)?(_[0-9]+)?$') { continue }
                 $needles.Add(@{ Label = ($e.Path + '#' + $kv.Key); Value = $kv.Value })
             }
         } elseif (Sec-IsUtf8Text $plain) {
@@ -1540,7 +1543,7 @@ function Cmd-HookPreCommit([string[]]$Argv) {
 function Show-Usage {
     Out-Line 'usage: secret [--repo <dir>] [--identity <file>] [--pull] <command> ...'
     Out-Line 'commands: init, recipients, rekey, add, edit, rm, show, get, run, materialize, list, info, inventory, resolve, check, recovery, hooks'
-    Out-Line 'see scripts/secrets/README.md'
+    Out-Line 'see cli/README.md'
 }
 
 function Invoke-SecretMain([string[]]$Argv) {

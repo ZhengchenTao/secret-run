@@ -660,16 +660,18 @@ try {
     Assert (-not (Test-CredentialLine 'abcdefghijklmn')) 'needle filter: letters only'
     Assert (-not (Test-CredentialLine 'short1a')) 'needle filter: too short'
     Assert (Test-CredentialLine 'ghp_Ab12Cd34Ef56') 'needle filter: token-looking line'
-    [void](RunCli @('add', 'personal/test/noise', '--type', 'kv', '--title', 'n', '--stdin') (B "ENV=prod`nPORT=8080`nLONGONE=abcd1234efgh`n"))
+    [void](RunCli @('add', 'personal/test/noise', '--type', 'kv', '--title', 'n', '--stdin') (B "ENV=prod`nPORT=8080`nLONGONE=abcd1234efgh`nUSERNAME=some.login.name`nSMTP_USER=mailer.account`nUSER_KEY=uk12345678abcd`n"))
     $pubLine = 'AAAAC3NzaC1lZDI1-' + (Sec-RandHex 10)
     $pubFile = [IO.Path]::Combine($T, 'host.pub'); [IO.File]::WriteAllBytes($pubFile, (B ($pubLine + "`n")))
     [void](RunCli @('add', 'personal/test/host-pub', '--type', 'file', '--title', 'p', '--from-file', $pubFile))
     $noiseLog = [IO.Path]::Combine($T, 'noise.log')
-    [IO.File]::WriteAllBytes($noiseLog, (B ("ENV=prod listening on PORT=8080`n|---|---|---|`n" + $pubLine + "`nLONGONE=abcd1234efgh`n")))
+    [IO.File]::WriteAllBytes($noiseLog, (B ("ENV=prod listening on PORT=8080`n|---|---|---|`n" + $pubLine + "`nLONGONE=abcd1234efgh`n+ wc some.login.name/repo as mailer.account`nuk12345678abcd`n")))
     $r = RunCli @('check', '--scan-log', $noiseLog)
     Assert (-not (HasLine $r.Text '^ERROR log-leak noise\.log personal/test/noise#ENV$') -and -not (HasLine $r.Text '^ERROR log-leak noise\.log personal/test/noise#PORT$')) 'log-leak: short kv values are not reported'
     Assert (-not (HasLine $r.Text '^ERROR log-leak .*personal/test/host-pub')) 'log-leak: *-pub file entries are skipped'
     Assert (HasLine $r.Text '^ERROR log-leak noise\.log personal/test/noise#LONGONE$') 'log-leak: a long value is still reported'
+    Assert (-not (HasLine $r.Text '^ERROR log-leak noise\.log personal/test/noise#USERNAME$') -and -not (HasLine $r.Text '^ERROR log-leak noise\.log personal/test/noise#SMTP_USER$')) 'log-leak: account-name fields are identifiers, not reported'
+    Assert (HasLine $r.Text '^ERROR log-leak noise\.log personal/test/noise#USER_KEY$') 'log-leak: USER_KEY is a credential and still reported'
     [void](RunCli @('rm', 'personal/test/noise', '--yes')); [void](RunCli @('rm', 'personal/test/host-pub', '--yes'))
     Assert ((RunCli @('rm', 'personal/test/pem', '--yes')).ExitCode -eq 0) 'rm the log-scan file entry'
 
