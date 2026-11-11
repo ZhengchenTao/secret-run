@@ -58,6 +58,9 @@ function Only-UserAcl([string]$Path) {
 }
 
 [Console]::Out.WriteLine('host: ' + $hostExe + ' ' + $PSVersionTable.PSVersion.ToString())
+$transactionTest = [IO.Path]::Combine($here, 'transaction.ps1')
+$transactionResult = Sec-Exec $hostExe @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $transactionTest) $null
+Assert ($transactionResult.ExitCode -eq 0) 'transaction: deterministic failure injection and rollback'
 
 # ================================================================ unit: TOML
 $sample = [char]0xFEFF + "# header one`r`n# header two`r`n`r`n[[recipient]]`r`nname=`t""a-1""  # c`r`nnote = 'lit # not comment'`r`n" +

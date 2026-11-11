@@ -127,9 +127,19 @@ function Sec-RandHex([int]$n = 8) {
     return ([BitConverter]::ToString($b) -replace '-', '').ToLowerInvariant()
 }
 
+# POSIX rename is controlled by the parent directory, so it can replace a read-only file. Honor
+# the same explicit read-only guard on every platform (also for deletes in Sec-ApplyChanges).
+# This is a best-effort check, not a defense against another process changing permissions concurrently.
+function Sec-AssertNotReadOnly([string]$Path) {
+    if ([IO.File]::Exists($Path) -and (([IO.File]::GetAttributes($Path) -band [IO.FileAttributes]::ReadOnly) -ne 0)) {
+        throw (New-Object System.UnauthorizedAccessException('target is read-only: ' + $Path))
+    }
+}
+
 # Rename over an existing file. The moved file keeps its own ACL (unlike File.Replace, which copies the old ACL).
 # pwsh 7: File.Move(overwrite). 5.1 (.NET Framework has no overwrite overload): MoveFileEx(REPLACE_EXISTING|WRITE_THROUGH).
 function Sec-MoveOver([string]$Src, [string]$Dst) {
+    Sec-AssertNotReadOnly $Dst
     if ($null -ne [IO.File].GetMethod('Move', [Type[]]@([string], [string], [bool]))) {
         [IO.File]::Move($Src, $Dst, $true)
         return
@@ -155,8 +165,14 @@ function Sec-ApplyChanges($Changes) {
     $items = New-Object 'System.Collections.Generic.List[object]'
     try {
         foreach ($c in $Changes) {
-            $it = @{ Path = $c.Path; Tmp = $null; Old = $null; Existed = [IO.File]::Exists($c.Path); Done = $false }
-            if ($it.Existed) { $it.Old = [IO.File]::ReadAllBytes($c.Path) }
+            $it = @{ Path = $c.Path; Tmp = $null; Old = $null; Existed = [IO.File]::Exists($c.Path); Done = $false; UnixMode = $null }
+            if ($it.Existed) {
+                $it.Old = [IO.File]::ReadAllBytes($c.Path)
+                # Available in .NET 6+; restore the mode along with contents on rollback.
+                if (-not (Sec-IsWindows) -and $null -ne [IO.File].GetMethod('GetUnixFileMode', [Type[]]@([string]))) {
+                    $it.UnixMode = [IO.File]::GetUnixFileMode($c.Path)
+                }
+            }
             $items.Add($it)
             if ($null -ne $c.Bytes) {
                 $dir = [IO.Path]::GetDirectoryName($c.Path)
@@ -167,7 +183,7 @@ function Sec-ApplyChanges($Changes) {
         }
         foreach ($it in $items) {
             if ($it.Tmp) { Sec-MoveOver $it.Tmp $it.Path; $it.Tmp = $null }
-            elseif ($it.Existed) { [IO.File]::Delete($it.Path) }
+            elseif ($it.Existed) { Sec-AssertNotReadOnly $it.Path; [IO.File]::Delete($it.Path) }
             $it.Done = $true
         }
     } catch {
@@ -180,6 +196,7 @@ function Sec-ApplyChanges($Changes) {
                 if ($it.Existed) {
                     $rb = $it.Path + '.rollback-' + (Sec-RandHex 4)
                     [IO.File]::WriteAllBytes($rb, [byte[]]$it.Old)
+                    if ($null -ne $it.UnixMode) { [IO.File]::SetUnixFileMode($rb, $it.UnixMode) }
                     Sec-MoveOver $rb $it.Path
                 } elseif ([IO.File]::Exists($it.Path)) { [IO.File]::Delete($it.Path) }
             } catch { $incomplete = $true }
